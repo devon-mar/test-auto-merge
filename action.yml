@@ -1,0 +1,37 @@
+---
+name: App Auto-Merge
+description: Enable auto-merge on a PR using a GitHub app.
+branding:
+  icon: git-merge
+  color: blue
+
+inputs:
+  app_id:
+    description: GitHub app ID
+    required: true
+  app_private_key:
+    description: GitHub app ID
+    required: true
+  pr_url:
+    description: Pull request HTML URL.
+    default: ${{ github.event.pull_request.html_url }}
+  repository:
+    description: The repository to request the app token for.
+
+runs:
+  using: composite
+  steps:
+    - name: Generate a token
+      id: generate_token
+      uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+      with:
+        app_id: ${{ inputs.app_id }}
+        private_key: ${{ inputs.app_private_key }}
+        repository: ${{ inputs.repository }}
+
+    - name: Enable auto-merge
+      shell: bash
+      run: gh pr merge --auto --merge "$PR_URL"
+      env:
+        PR_URL: ${{ inputs.pr_url }}
+        GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
